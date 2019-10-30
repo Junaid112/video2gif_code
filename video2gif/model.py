@@ -6,7 +6,11 @@ This module contains the model used in our paper
 __author__ = 'michaelgygli'
 
 from lasagne.layers.shape import PadLayer
+
+#import  lasagne.layers.pad as PadLayer
+
 from lasagne.layers import InputLayer, DenseLayer
+
 try:
     from lasagne.layers.dnn import Conv3DDNNLayer, MaxPool3DDNNLayer
 except ImportError as e:
@@ -43,26 +47,30 @@ def build_model(input_var=None, batch_size=2, use_cpu_compatible = theano.config
         # Pad first, as this layer doesn't support padding
         net['pad']    = PadLayer(net['input'],width=1, batch_ndim=2)
         net['conv1a'] = lasagne.layers.conv.Conv3DLayer(net['pad'], 64, (3,3,3), pad=0,nonlinearity=lasagne.nonlinearities.rectify,flip_filters=True)
-        net['pool1']  = lasagne.layers.pool.Pool3Layer(net['conv1a'],pool_size=(1,2,2),stride=(1,2,2))
+#        net['pool1']  = lasagne.layers.pool.Pool3Layer(net['conv1a'],pool_size=(1,2,2),stride=(1,2,2))
+        net['pool1']  = lasagne.layers.Pool3DLayer(net['conv1a'],pool_size=(1,2,2),stride=(1,2,2))
 
         # ------------- 2nd layer group --------------
         net['pad2']    = PadLayer(net['pool1'],width=1, batch_ndim=2)
         net['conv2a'] = lasagne.layers.conv.Conv3DLayer(net['pad2'], 128, (3,3,3), pad=0,nonlinearity=lasagne.nonlinearities.rectify)
-        net['pool2']  = lasagne.layers.pool.Pool3Layer(net['conv2a'],pool_size=(2,2,2),stride=(2,2,2))
+#        net['pool2']  = lasagne.layers.pool.Pool3Layer(net['conv2a'],pool_size=(2,2,2),stride=(2,2,2))
+        net['pool2']  = lasagne.layers.Pool3DLayer(net['conv2a'],pool_size=(2,2,2),stride=(2,2,2))
 
         # ----------------- 3rd layer group --------------
         net['pad3a']    = PadLayer(net['pool2'],width=1, batch_ndim=2)
         net['conv3a'] = lasagne.layers.conv.Conv3DLayer(net['pad3a'], 256, (3,3,3), pad=0,nonlinearity=lasagne.nonlinearities.rectify)
         net['pad3b']    = PadLayer(net['conv3a'],width=1, batch_ndim=2)
         net['conv3b'] = lasagne.layers.conv.Conv3DLayer(net['pad3b'], 256, (3,3,3), pad=0,nonlinearity=lasagne.nonlinearities.rectify)
-        net['pool3']  = lasagne.layers.pool.Pool3Layer(net['conv3b'],pool_size=(2,2,2),stride=(2,2,2))
+#        net['pool3']  = lasagne.layers.pool.Pool3Layer(net['conv3b'],pool_size=(2,2,2),stride=(2,2,2))
+        net['pool3']  = lasagne.layers.Pool3DLayer(net['conv3b'],pool_size=(2,2,2),stride=(2,2,2))
 
         # ----------------- 4th layer group --------------
         net['pad4a']    = PadLayer(net['pool3'],width=1, batch_ndim=2)
         net['conv4a'] = lasagne.layers.conv.Conv3DLayer(net['pad4a'], 512, (3,3,3), pad=0,nonlinearity=lasagne.nonlinearities.rectify)
         net['pad4b']    = PadLayer(net['conv4a'],width=1, batch_ndim=2)
         net['conv4b'] = lasagne.layers.conv.Conv3DLayer(net['pad4b'], 512, (3,3,3), pad=0,nonlinearity=lasagne.nonlinearities.rectify)
-        net['pool4']  = lasagne.layers.pool.Pool3Layer(net['conv4b'],pool_size=(2,2,2),stride=(2,2,2))
+#        net['pool4']  = lasagne.layers.pool.Pool3Layer(net['conv4b'],pool_size=(2,2,2),stride=(2,2,2))
+        net['pool4']  = lasagne.layers.Pool3DLayer(net['conv4b'],pool_size=(2,2,2),stride=(2,2,2))
 
         # ----------------- 5th layer group --------------
         net['pad5a']    = PadLayer(net['pool4'],width=1, batch_ndim=2)
@@ -72,7 +80,8 @@ def build_model(input_var=None, batch_size=2, use_cpu_compatible = theano.config
 
         # We need a padding layer, as C3D only pads on the right, which cannot be done with a theano pooling layer
         net['pad']    = PadLayer(net['conv5b'],width=[(0,1),(0,1)], batch_ndim=3)
-        net['pool5']  = lasagne.layers.pool.Pool3Layer(net['pad'],pool_size=(2,2,2),pad=(0,0,0),stride=(2,2,2))
+#        net['pool5']  = lasagne.layers.pool.Pool3Layer(net['pad'],pool_size=(2,2,2),pad=(0,0,0),stride=(2,2,2))
+        net['pool5']  = lasagne.layers.Pool3DLayer(net['pad'],pool_size=(2,2,2),pad=(0,0,0),stride=(2,2,2))
         net['fc6-1']  = DenseLayer(net['pool5'], num_units=4096,nonlinearity=lasagne.nonlinearities.rectify)
 
     else:
@@ -131,7 +140,8 @@ def set_weights(net,
 
     # Get autogif_demo weights and add them to the model weights
     print('Load pretrained autogif_demo weights from %s...' % video2gif_weight_file)
-    autogif_weights = np.load(video2gif_weight_file)['arr_0']
+#    autogif_weights = np.load(video2gif_weight_file,allow_pickle=True)['arr_0']
+    autogif_weights = np.load(video2gif_weight_file,allow_pickle=True)['arr_0']
     autogif_model=model[0:-4]
     autogif_model.extend(list(autogif_weights))
     print('Set the weights...')
